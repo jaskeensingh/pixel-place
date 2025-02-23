@@ -23,19 +23,20 @@ A real-time collaborative pixel art canvas inspired by r/place, built with moder
 - **Next.js 15**: React framework for the UI
 - **TypeScript**: Type-safe code
 - **Tailwind CSS**: Styling and components
-- **Socket.IO Client**: Real-time communication
+- **WebSocket API**: Real-time communication
 - **Zustand**: State management
 
 ### Backend
 - **Node.js**: Runtime environment
-- **Socket.IO**: WebSocket server
+- **WebSocket (ws)**: Native WebSocket server
 - **Prisma**: Database ORM
 - **PostgreSQL**: Database (via Supabase)
 
 ## How It Works
 
 - The canvas state is stored in a PostgreSQL database
-- Real-time updates are handled through WebSocket connections
+- Real-time updates are handled through Edge Runtime WebSockets
+- Changes are instantly broadcasted to all connected users
 - Global mode enforces a 5-minute cooldown between pixel placements
 - Room mode creates isolated canvases for private collaboration
 - Personal mode stores pixels locally for individual creation

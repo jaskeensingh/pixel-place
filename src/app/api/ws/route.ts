@@ -1,39 +1,36 @@
-import { WebSocketServer } from '@vercel/edge'
+import { WebSocket, MessageEvent } from 'ws';
 import { prisma } from '@/lib/prisma'
+
+// Keep track of all connected clients
+const clients = new Set<WebSocket>();
 
 export const runtime = 'edge'
 
-const wsServer = new WebSocketServer({
-  path: '/api/ws',
-})
+export async function GET(req: Request) {
+  const webSocket = new WebSocket(req.url);
+  clients.add(webSocket);
 
-wsServer.on('connection', (socket) => {
-  socket.on('join-room', (roomId: string) => {
-    socket.join(roomId)
-  })
+  webSocket.onmessage = (async ({ data }: MessageEvent) => {
+    const message = JSON.parse(data.toString());
+    if (message.type === 'place-pixel') {
+      await prisma.pixel.upsert({
+        where: { x_y: { x: message.x, y: message.y } },
+        update: { color: message.color },
+        create: { x: message.x, y: message.y, color: message.color, userId: '1' }
+      });
 
-  socket.on('place-pixel', async (data: { x: number; y: number; color: string; roomId?: string }) => {
-    if (data.roomId) {
-      wsServer.to(data.roomId).emit('pixel-update', data)
-    } else {
-      wsServer.emit('pixel-update', data)
+      // Broadcast to other clients
+      clients.forEach(client => {
+        if (client !== webSocket && client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify(message));
+        }
+      });
     }
+  }) as (event: MessageEvent) => void;
 
-    await prisma.pixel.upsert({
-      where: {
-        x_y: { x: data.x, y: data.y }
-      },
-      update: { color: data.color },
-      create: {
-        x: data.x,
-        y: data.y,
-        color: data.color,
-        userId: '1'
-      }
-    })
-  })
-})
+  webSocket.onclose = () => {
+    clients.delete(webSocket);
+  };
 
-export function GET() {
-  return wsServer.handleUpgrade()
+  return new Response(null, { status: 101 });
 } 

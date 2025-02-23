@@ -26,7 +26,7 @@ export const useStore = create<Store>((set) => ({
   // Initial state and actions
   collaborativePixels: [],
   personalPixels: [],
-  setPixels: (pixels, mode) => set(state => ({
+  setPixels: (pixels, mode) => set(() => ({
     [mode === 'collaborative' ? 'collaborativePixels' : 'personalPixels']: pixels
   })),
   

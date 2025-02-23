@@ -2,14 +2,32 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+//import { Button } from '@/components/ui/button';
 import { Clock, ZoomIn, ZoomOut } from 'lucide-react';
-import type { PixelGrid } from '@/types';
-import { Socket } from 'socket.io-client';
-import io from 'socket.io-client';
+//import type { PixelGrid } from '@/types';
+//import { Socket } from 'socket.io-client';
+//import io from 'socket.io-client';
 import { useStore } from '@/lib/store';
 
-type Mode = 'collaborative' | 'personal' | 'room';
+// Update socket message types
+interface SocketMessage {
+  type: string;
+  x: number;
+  y: number;
+  color: string;
+  roomId?: string;
+}
+
+interface SocketData {
+  roomId?: string;
+  x?: number;
+  y?: number;
+  color?: string;
+}
+
+const sendSocketMessage = (socket: WebSocket, type: string, data: SocketData) => {
+  socket.send(JSON.stringify({ type, ...data }));
+};
 
 const PixelCanvas = () => {
   const {
@@ -44,35 +62,36 @@ const PixelCanvas = () => {
 
   useEffect(() => {
     const initSocket = async () => {
-      const socket = new WebSocket(`${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/api/ws`)
+      const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 
+        `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/api/ws`;
+      
+      const socket = new WebSocket(wsUrl);
       
       socket.onopen = () => {
-        console.log('Connected to WebSocket')
-      }
+        console.log('Connected to WebSocket');
+      };
 
       socket.onmessage = (event) => {
-        const data = JSON.parse(event.data)
+        const data = JSON.parse(event.data) as SocketMessage;
         if (data.type === 'pixel-update') {
           setPixels(
             collaborativePixels.map((r, i) => 
               r.map((c, j) => i === data.y && j === data.x ? data.color : c)
             ),
             'collaborative'
-          )
+          );
         }
-      }
+      };
 
-      socketRef.current = socket
-    }
+      socketRef.current = socket;
+    };
 
-    initSocket()
+    initSocket();
 
     return () => {
-      if (socketRef.current) {
-        socketRef.current.close()
-      }
-    }
-  }, [])
+      socketRef.current?.close();
+    };
+  }, [collaborativePixels, setPixels]);
 
   // Initialize canvases
   useEffect(() => {
@@ -81,7 +100,7 @@ const PixelCanvas = () => {
     );
     setPixels(initialPixels, 'collaborative');
     setPixels(initialPixels, 'personal');
-  }, [canvasSize]);
+  }, [canvasSize, setPixels]);
   
   // Timer logic
   useEffect(() => {
@@ -96,6 +115,20 @@ const PixelCanvas = () => {
     return () => clearInterval(timer);
   }, [lastPlacedTime, mode]);
   
+  const handleJoinRoom = () => {
+    if (socketRef.current) {
+      sendSocketMessage(socketRef.current, 'join-room', { roomId });
+    }
+  };
+
+  const handleCreateRoom = () => {
+    const newRoomId = Math.random().toString(36).substring(7);
+    setRoomId(newRoomId);
+    if (socketRef.current) {
+      sendSocketMessage(socketRef.current, 'create-room', { roomId: newRoomId });
+    }
+  };
+
   const handlePixelClick = (row: number, col: number) => {
     if (mode !== 'personal') {
       const now = Date.now();
@@ -109,11 +142,14 @@ const PixelCanvas = () => {
         'collaborative'
       );
       
-      socketRef.current?.emit('place-pixel', { 
-        x: col, y: row, 
-        color: selectedColor,
-        roomId: mode === 'room' ? roomId : undefined 
-      });
+      if (socketRef.current) {
+        sendSocketMessage(socketRef.current, 'place-pixel', {
+          x: col,
+          y: row,
+          color: selectedColor,
+          roomId: mode === 'room' ? roomId : undefined
+        });
+      }
     } else {
       setPixels(
         personalPixels.map((r, i) => 
@@ -186,17 +222,13 @@ const PixelCanvas = () => {
                 className="px-4 py-2 rounded-lg bg-gray-100 border-0 focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400"
               />
               <button
-                onClick={() => socketRef.current?.emit('join-room', roomId)}
+                onClick={handleJoinRoom}
                 className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors"
               >
                 Join
               </button>
               <button
-                onClick={() => {
-                  const newRoomId = Math.random().toString(36).substring(7);
-                  setRoomId(newRoomId);
-                  socketRef.current?.emit('create-room', newRoomId);
-                }}
+                onClick={handleCreateRoom}
                 className="px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition-colors"
               >
                 Create
@@ -282,21 +314,24 @@ const PixelCanvas = () => {
               style={{ 
                 display: 'grid',
                 gridTemplateColumns: `repeat(${canvasSize.width}, 1fr)`,
-                gap: '1px',
+                gap: 0,
                 transform: `scale(${zoom}) translateZ(0)`,
                 transformOrigin: 'top left',
-                backgroundColor: '#f0f0f0',
-                padding: '1px',
+                backgroundColor: 'transparent',
                 width: '100%',
-                aspectRatio: '1 / 1'
+                aspectRatio: '1 / 1',
+                border: '1px solid #e5e7eb'
               }}
             >
               {activePixels.map((row, rowIndex) => 
                 row.map((color, colIndex) => (
                   <div
                     key={`${rowIndex}-${colIndex}`}
-                    className="aspect-square w-2 h-2 cursor-pointer hover:opacity-75 transition-opacity"
-                    style={{ backgroundColor: color }}
+                    className="cursor-pointer hover:opacity-75 aspect-square"
+                    style={{ 
+                      backgroundColor: color,
+                      outline: '0.5px solid rgba(0,0,0,0.1)'
+                    }}
                     onClick={() => handlePixelClick(rowIndex, colIndex)}
                   />
                 ))
