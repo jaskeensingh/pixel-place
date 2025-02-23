@@ -1,9 +1,15 @@
 {
   "version": 2,
+  "regions": ["iad1"],
+  "functions": {
+    "src/app/api/ws/route.ts": {
+      "runtime": "edge"
+    }
+  },
   "routes": [
     {
       "src": "/api/ws",
-      "dest": "/api/ws/route.ts"
+      "dest": "/api/ws/route"
     }
   ]
 } 
