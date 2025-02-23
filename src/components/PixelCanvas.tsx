@@ -62,8 +62,8 @@ const PixelCanvas = () => {
 
   useEffect(() => {
     const initSocket = async () => {
-      const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 
-        `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/api/ws`;
+      const clientId = crypto.randomUUID();
+      const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/api/ws?clientId=${clientId}`;
       
       const socket = new WebSocket(wsUrl);
       
@@ -83,14 +83,20 @@ const PixelCanvas = () => {
         }
       };
 
+      socket.onerror = (error) => {
+        console.error('WebSocket error:', error);
+      };
+
       socketRef.current = socket;
+
+      return () => {
+        if (socket.readyState === WebSocket.OPEN) {
+          socket.close();
+        }
+      };
     };
 
     initSocket();
-
-    return () => {
-      socketRef.current?.close();
-    };
   }, [collaborativePixels, setPixels]);
 
   // Initialize canvases
@@ -207,7 +213,7 @@ const PixelCanvas = () => {
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
-              👥 Room
+              �� Room
             </button>
           </div>
 
