@@ -23,12 +23,11 @@ const PixelCanvas = () => {
   const [lastPlacedTime, setLastPlacedTime] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
   const [zoom, setZoom] = useState(1);
-  const [showRoomDialog, setShowRoomDialog] = useState(false);
 
   const COOLDOWN_TIME = 300; // 5 minutes in seconds
 
   // Keep track of socket in a ref instead
-  const socketRef = useRef<typeof Socket | null>(null);
+  const socketRef = useRef<WebSocket | null>(null);
 
   // Add zoom limits
   const MIN_ZOOM = 0.5;
@@ -45,30 +44,35 @@ const PixelCanvas = () => {
 
   useEffect(() => {
     const initSocket = async () => {
-      await fetch('/api/socket');
-      socketRef.current = io();
+      const socket = new WebSocket(`${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/api/ws`)
+      
+      socket.onopen = () => {
+        console.log('Connected to WebSocket')
+      }
 
-      socketRef.current.on('connect', () => {
-        console.log('Connected to WebSocket');
-      });
+      socket.onmessage = (event) => {
+        const data = JSON.parse(event.data)
+        if (data.type === 'pixel-update') {
+          setPixels(
+            collaborativePixels.map((r, i) => 
+              r.map((c, j) => i === data.y && j === data.x ? data.color : c)
+            ),
+            'collaborative'
+          )
+        }
+      }
 
-      socketRef.current.on('pixel-update', (data: { x: number; y: number; color: string }) => {
-        console.log('Received update:', data);
-        setPixels(
-          collaborativePixels.map((r, i) => 
-            r.map((c, j) => i === data.y && j === data.x ? data.color : c)
-          ),
-          'collaborative'
-        );
-      });
-    };
+      socketRef.current = socket
+    }
 
-    initSocket();
+    initSocket()
 
     return () => {
-      if (socketRef.current) socketRef.current.disconnect();
-    };
-  }, []);
+      if (socketRef.current) {
+        socketRef.current.close()
+      }
+    }
+  }, [])
 
   // Initialize canvases
   useEffect(() => {

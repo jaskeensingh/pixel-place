@@ -7,8 +7,8 @@ let io: SocketIOServer
 
 export async function GET() {
   if (!io) {
-    // @ts-ignore - server is attached by socket.io
-    const server = (global as any).server
+    // @ts-expect-error server is attached by socket.io
+    const server = (global as unknown).server
     io = new SocketIOServer(server)
 
     io.on('connection', socket => {
