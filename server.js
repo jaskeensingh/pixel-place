@@ -7,6 +7,8 @@ const dev = process.env.NODE_ENV !== 'production'
 const app = next({ dev })
 const handle = app.getRequestHandler()
 
+const port = process.env.PORT || 3001;
+
 app.prepare().then(() => {
   const server = createServer((req, res) => {
     const parsedUrl = parse(req.url, true)
@@ -20,8 +22,8 @@ app.prepare().then(() => {
   })
   global.server = server
 
-  server.listen(3000, (err) => {
+  server.listen(port, (err) => {
     if (err) throw err
-    console.log('> Ready on http://localhost:3000')
+    console.log(`> Ready on http://localhost:${port}`)
   })
 }) 

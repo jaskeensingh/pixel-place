@@ -126,7 +126,7 @@ const PixelCanvas = () => {
     <div className="flex flex-col items-center gap-8 p-6 w-full max-w-[95vw] mx-auto">
       {/* Title and Description - wider */}
       <div className="text-center max-w-4xl w-full">
-        <p className="text-lg text-gray-600 leading-relaxed">
+        <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
           Welcome to a boundless digital canvas where every pixel tells a story. 
           Join fellow artists in crafting a living masterpiece, one square at a time. 
           Whether you&apos;re contributing to the global tapestry, creating in your personal space, 
@@ -135,7 +135,7 @@ const PixelCanvas = () => {
       </div>
 
       {/* Mode Selector - wider */}
-      <div className="bg-white/50 backdrop-blur-sm rounded-2xl p-4 w-full max-w-6xl border border-gray-100">
+      <div className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-2xl p-4 w-full max-w-6xl border border-gray-100 dark:border-gray-700">
         <div className="flex gap-6 justify-center items-center">
           {/* Modern Radio-style Mode Selector */}
           <div className="flex gap-3">
@@ -203,9 +203,9 @@ const PixelCanvas = () => {
       </div>
 
       {/* Main Canvas Card - wider */}
-      <Card className="w-full max-w-[95vw] bg-white shadow-lg">
-        <CardHeader className="border-b">
-          <CardTitle className="flex justify-between items-center">
+      <Card className="w-full max-w-[95vw] bg-white dark:bg-gray-800 shadow-lg">
+        <CardHeader className="border-b border-gray-200 dark:border-gray-700">
+          <CardTitle className="flex justify-between items-center text-gray-900 dark:text-gray-100">
             <div className="flex items-center gap-2">
               <button 
                 onClick={handleZoomOut}
@@ -223,14 +223,14 @@ const PixelCanvas = () => {
             </div>
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-8 bg-gray-50">
+        <CardContent className="p-8 bg-gray-50 dark:bg-gray-900">
           {/* Tools Section */}
-          <div className="flex justify-between items-start mb-8 bg-white p-6 rounded-lg shadow-sm">
+          <div className="flex justify-between items-start mb-8 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
             {/* Color Tools */}
             <div className="flex gap-12">
               {/* Custom Color */}
               <div className="flex flex-col items-center gap-2">
-                <span className="font-medium text-sm text-gray-700">Custom Color</span>
+                <span className="font-medium text-sm text-gray-700 dark:text-gray-300">Custom Color</span>
                 <input 
                   type="color"
                   value={selectedColor}
@@ -241,7 +241,7 @@ const PixelCanvas = () => {
               
               {/* Preset Colors */}
               <div className="flex flex-col gap-2">
-                <span className="font-medium text-sm text-gray-700">Quick Colors</span>
+                <span className="font-medium text-sm text-gray-700 dark:text-gray-300">Quick Colors</span>
                 <div className="flex gap-3 flex-wrap max-w-[600px]">
                   {[
                     '#000000', '#FFFFFF', '#FF0000', '#00FF00', '#0000FF',
@@ -273,7 +273,7 @@ const PixelCanvas = () => {
           </div>
 
           {/* Canvas Container */}
-          <div className="bg-white rounded-lg shadow-sm overflow-auto p-6 max-h-[70vh] w-full">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-auto p-6 max-h-[70vh] w-full">
             <div 
               style={{ 
                 display: 'grid',
@@ -301,6 +301,21 @@ const PixelCanvas = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Footer */}
+      <footer className="text-center text-gray-600 dark:text-gray-400 mt-8">
+        <p className="text-sm">
+          Made with ❤️ by{' '}
+          <a 
+            href="https://github.com/jaskeensingh" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-blue-500 hover:text-blue-600 transition-colors"
+          >
+            Jaskeen
+          </a>
+        </p>
+      </footer>
     </div>
   );
 };
