@@ -6,7 +6,7 @@
     "seed": "ts-node prisma/seed.ts"
   },
   "scripts": {
-    "dev": "node server.js",
+    "dev": "ts-node server.ts",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
